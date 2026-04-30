@@ -88,9 +88,8 @@
   <section class="panel">
     <div class="panel-head"><span>👶 Параметры ребёнка</span><span>▪ ▪ ▪</span></div>
     <div class="panel-body">
-      <div class="option-group"><div class="option-label">Пол</div><div class="option-row" id="genderRow"><button class="option-btn" data-value="boy">Мальчик</button><button class="option-btn" data-value="girl">Девочка</button><button class="option-btn active" data-value="any">Не важно</button></div></div>
+      <div class="option-group"><div class="option-label">Пол</div><div class="option-row" id="genderRow"><button class="option-btn active" data-value="boy">Мальчик</button><button class="option-btn" data-value="girl">Девочка</button></div></div>
       <div class="option-group"><div class="option-label">Возраст</div><div class="option-row" id="ageRow"><button class="option-btn" data-value="0">0–6 мес</button><button class="option-btn" data-value="0.5">6–12 мес</button><button class="option-btn" data-value="2">1–3</button><button class="option-btn active" data-value="5">4–6</button><button class="option-btn" data-value="8">7–10</button><button class="option-btn" data-value="12">11+</button></div></div>
-      <div class="option-group"><div class="option-label">Теплоощущение</div><div class="option-row" id="tempRow"><button class="option-btn" data-value="cold">Мерзлявый</button><button class="option-btn active" data-value="normal">Обычный</button><button class="option-btn" data-value="hot">Жаркий</button></div></div>
     </div>
   </section>
 
@@ -110,7 +109,7 @@
 </div>
 <script>
 'use strict';
-const state={lat:null,lon:null,cityLabel:'',gender:'any',age:5,temperature:'normal',periods:null,current:null,allDay:null,activeTab:'now',shownFacts:[]};
+const state={lat:null,lon:null,cityLabel:'',gender:'boy',age:5,temperature:'normal',periods:null,current:null,allDay:null,activeTab:'now',shownFacts:[]};
 const WEEKDAYS=['ВОСКРЕСЕНЬЕ','ПОНЕДЕЛЬНИК','ВТОРНИК','СРЕДА','ЧЕТВЕРГ','ПЯТНИЦА','СУББОТА'];
 const MONTHS=['ЯНВАРЯ','ФЕВРАЛЯ','МАРТА','АПРЕЛЯ','МАЯ','ИЮНЯ','ИЮЛЯ','АВГУСТА','СЕНТЯБРЯ','ОКТЯБРЯ','НОЯБРЯ','ДЕКАБРЯ'];
 const PERIOD_META={morning:{name:'Утро',time:'7:00–10:00',emoji:'🌅'},day:{name:'Днём',time:'12:00–15:00',emoji:'☀️'},evening:{name:'Вечер',time:'18:00–21:00',emoji:'🌆'}};
@@ -303,13 +302,13 @@ function generateClothingRecommendation(w,profile){
     if(w.precip>35)add('bring','запасные носки');
   }else if(profile.age<=8){
     notes.push('7–10 лет: ребёнок уже активный, поэтому не собираем его в экспедицию без причины.');
-    if(w.feels>=6&&w.feels<=17&&profile.temperature!=='cold'){
+    if(w.feels>=6&&w.feels<=17){
       remove('base','термобельё');
       add('bring','тонкая кофта в рюкзак');
     }
   }else{
     notes.push('11+: ближе к взрослой логике. Лучше удобный слой в рюкзак, чем лишнее утепление на себе.');
-    if(w.feels>=6&&w.feels<=17&&profile.temperature!=='cold'){
+    if(w.feels>=6&&w.feels<=17){
       remove('base','термобельё');
       add('bring','лёгкий слой на вечер');
     }
@@ -326,15 +325,6 @@ function generateClothingRecommendation(w,profile){
     if(profile.age<=5)add('bring','запасные штаны');
     if(w.feels<18&&w.feels>=6)layers.outer=['дождевик','непромокаемая ветровка'];
     prepend('shoes','непромокаемая обувь');
-  }
-  if(profile.temperature==='cold'&&w.feels<24){
-    notes.push('Мерзлявому ребёнку — один лёгкий слой про запас.');
-    if(layers.mid.includes('не нужен'))layers.mid=['тонкая кофта'];
-    else add('bring','дополнительная кофта');
-  }
-  if(profile.temperature==='hot'&&w.feels>=6){
-    notes.push('Жаркому ребёнку делаем комплект легче: снять слой проще, чем сушить драму.');
-    if(w.feels>=12&&profile.age>=4)remove('base','термобельё');
   }
   if(profile.age>=4&&w.feels>=6&&w.feels<=17){
     notes.push('Если ребёнок носится как маленький метеор, не утепляем чрезмерно.');
@@ -356,10 +346,10 @@ function bindTabs(){document.querySelectorAll('.tab').forEach(btn=>btn.addEventL
 function bindFact(){const b=document.getElementById('nextFactBtn');if(b)b.addEventListener('click',()=>{document.getElementById('factText').textContent=FACTS[nextFact()]})}
 function renderResults(){let html=`<div class="location-wrap"><div class="location">📍 ${esc(state.cityLabel)}</div></div>`;html+=renderTabs();html+=`<div id="tabContent">${activeContent()}</div>`;html+=renderFact();document.getElementById('results').innerHTML=html;bindTabs();bindFact();clearStatus()}
 async function runForecast(lat,lon,label){try{setLoading('Загружаем прогноз');const data=await fetchWeather(lat,lon);state.current=normalizeCurrent(data);state.periods=groupForecastByPeriods(data);state.allDay=aggregateAllDay(state.periods);state.activeTab='now';state.cityLabel=label;if(!state.current&&!state.allDay){showError('Не удалось собрать прогноз. Попробуйте другой город или чуть позже.');return}renderResults()}catch(e){console.error(e);showError('Не получилось загрузить погоду. Проверьте интернет и попробуйте ещё раз.')}}
-async function handleSubmit(){const city=document.getElementById('cityInput').value.trim();if(!city){showError('Введите город — например, Москва.');return}try{setLoading('Ищем город');const g=await geocodeCity(city);state.lat=g.lat;state.lon=g.lon;await runForecast(g.lat,g.lon,g.name)}catch(e){console.error(e);showError(e.message==='city-not-found'?'Не нашли такой город. Проверьте написание.':'Ошибка при поиске города. Проверьте интернет.')}}
+async function handleSubmit(){const cityInput=document.getElementById('cityInput');cityInput.blur();const city=cityInput.value.trim();if(!city){showError('Введите город — например, Москва.');return}try{setLoading('Ищем город');const g=await geocodeCity(city);state.lat=g.lat;state.lon=g.lon;await runForecast(g.lat,g.lon,g.name)}catch(e){console.error(e);showError(e.message==='city-not-found'?'Не нашли такой город. Проверьте написание.':'Ошибка при поиске города. Проверьте интернет.')}}
 function setupOptionRow(id,key,parser){const row=document.getElementById(id);row.querySelectorAll('.option-btn').forEach(btn=>{btn.addEventListener('click',()=>{row.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');state[key]=parser?parser(btn.dataset.value):btn.dataset.value;if(state.periods)document.getElementById('tabContent').innerHTML=activeContent()})})}
 function tickDate(){document.getElementById('dateLabel').textContent=formatDate(new Date())}
-document.addEventListener('DOMContentLoaded',()=>{document.getElementById('submitBtn').addEventListener('click',handleSubmit);document.getElementById('cityInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleSubmit()}});setupOptionRow('genderRow','gender');setupOptionRow('ageRow','age',v=>v==='0.5'?0.5:parseInt(v,10));setupOptionRow('tempRow','temperature');tickDate();setInterval(tickDate,30000)});
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('submitBtn').addEventListener('click',handleSubmit);document.getElementById('cityInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleSubmit()}});setupOptionRow('genderRow','gender');setupOptionRow('ageRow','age',v=>v==='0.5'?0.5:parseInt(v,10));tickDate();setInterval(tickDate,30000)});
 </script>
 </body>
 </html>
