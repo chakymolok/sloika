@@ -1,25 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script>
-(function() {
-    var webApp, botUsername;
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-      webApp = window.Telegram.WebApp;
-      botUsername = "sloika_ibot"; // заменить на username телеграм бота
-    } else if (window.WebApp && window.WebApp.initData) {
-      webApp = window.WebApp;
-      botUsername = "id503124294144_2_bot"; // заменить на username макс бота
-    }
-    if (webApp) {
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", "https://api.onedam.me/webapp/" + botUsername);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.send(JSON.stringify(webApp));
-    }
-  })();
 
-    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
     (function(m,e,t,r,i,k,a){
@@ -923,5 +906,11 @@ function setupIceMode(){
   });
 }
 </script>
+  <script
+    src="https://api.onedam.me/assets/js/onedam-webapp.js"
+    data-telegram-bot="sloika_ibot"
+    data-onedam-webapp
+    data-debug
+  ></script>
 </body>
 </html>
